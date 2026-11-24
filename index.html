@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TopFix: прайс на запчасти Apple</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='11' fill='%231d1d1f'/%3E%3Cpath d='M12 15h24M24 15v17' stroke='%23fff' stroke-width='5.5' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='37' r='4.2' fill='%23f0b273'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   /* Идея: печатная плата. Зелёная паяльная маска, медные дорожки, золотые контактные площадки. */
@@ -146,8 +149,8 @@ footer svg{flex:none;width:26px;height:26px;margin-top:1px}
 /* ===== Apple-style theme ===== */
 :root{--bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--muted:#6e6e73;--line:#e5e5ea;--acc:#0071e3;--acc-ink:#fff;--cu:#0071e3;--cu-soft:#eef5fd;--price:#1d1d1f;
   --hd:#fbfbfd;--nav:rgba(251,251,253,.78);--tabbg:rgba(0,0,0,.05);--tabsel:#1d1d1f;--tabsel-ink:#fff;--sh:0 1px 2px rgba(0,0,0,.04),0 6px 24px -12px rgba(0,0,0,.12);
-  --font-head:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue","Noto Sans KR","Noto Sans",Arial,sans-serif;
-  --font-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue","Noto Sans KR","Noto Sans",Arial,sans-serif;color-scheme:light}
+  --font-head:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue","Noto Sans KR","Noto Sans",Arial,sans-serif;
+  --font-body:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue","Noto Sans KR","Noto Sans",Arial,sans-serif;color-scheme:light}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#000;--card:#1c1c1e;--ink:#f5f5f7;--muted:#a1a1a6;--line:#38383a;--acc:#2997ff;--acc-ink:#fff;--cu:#2997ff;--cu-soft:#10202f;--price:#f5f5f7;
   --hd:#000;--nav:rgba(28,28,30,.78);--tabbg:rgba(255,255,255,.1);--tabsel:#f5f5f7;--tabsel-ink:#000;--sh:none;color-scheme:dark}}
 body{font-size:15px;letter-spacing:-.011em;-webkit-font-smoothing:antialiased}
@@ -220,6 +223,56 @@ footer svg circle:first-of-type,footer svg circle:nth-of-type(3),footer svg circ
 footer svg circle:nth-of-type(2){fill:#1d1d1f}
 @media (prefers-reduced-motion:no-preference){.group,.ser{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}}
 @media (max-width:480px){.row{padding:12px 14px}.group h2{padding:13px 14px}}
+
+/* ===== Motion & polish ===== */
+.hd{position:relative;overflow:hidden;isolation:isolate}
+.hd::before,.hd::after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(70px);opacity:.55;pointer-events:none}
+.hd::before{width:420px;height:420px;right:-90px;top:-120px;background:radial-gradient(circle,#7ab8ff,transparent 65%)}
+.hd::after{width:380px;height:380px;left:-120px;bottom:-200px;background:radial-gradient(circle,#c9a7ff,transparent 65%)}
+:root:not([data-theme="light"]) .hd::before,:root:not([data-theme="light"]) .hd::after{opacity:.35}
+h1{background:linear-gradient(100deg,var(--ink) 0%,var(--ink) 45%,#0071e3 75%,#8e5cf7 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;padding-bottom:.08em}
+.wm,h1,.group h2,.ser>summary,.dh h2{font-feature-settings:"ss01","cv11"}
+body,.row,.price,.qn,.ci .s,.tot{font-variant-numeric:tabular-nums}
+.nav{transition:box-shadow .3s,background .3s}
+.nav.stuck{box-shadow:0 8px 30px -14px rgba(0,0,0,.35)}
+.ser,.group{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+.ser:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(0,0,0,.05),0 16px 36px -14px rgba(0,0,0,.2)}
+.ser[open]:hover{transform:none}
+.row{transition:background .2s}
+.row:hover{background:color-mix(in srgb,var(--acc) 5%,transparent)}
+.ser[open]>*:not(summary){animation:fadeIn .4s ease both}
+.ser>summary::before{transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.tab:active{transform:scale(.95)}
+.btn:hover{filter:brightness(1.08)}
+.fab{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+.fab:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 14px 34px -8px rgba(0,113,227,.6)}
+.fab.bump{animation:bump .55s cubic-bezier(.2,.8,.2,1)}
+.fab.bump .cnt{animation:popc .55s cubic-bezier(.2,.8,.2,1)}
+.qty{animation:popIn .28s cubic-bezier(.2,.8,.2,1)}
+.drawer.on{animation:slideIn .4s cubic-bezier(.2,.8,.2,1)}
+.veil.on{animation:fadeIn .3s ease}
+.ci{animation:fadeIn .35s ease both}
+.rv{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+@keyframes bump{30%{transform:scale(1.14)}60%{transform:scale(.97)}}
+@keyframes popc{30%{transform:scale(1.5)}}
+@keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes shimmer{0%{background-position:0 0}100%{background-position:100% 0}}
+@keyframes float1{50%{transform:translate(-30px,30px) scale(1.12)}}
+@keyframes float2{50%{transform:translate(40px,-24px) scale(1.1)}}
+@media (prefers-reduced-motion:no-preference){
+  .hd .brand{animation:up .7s .05s cubic-bezier(.2,.8,.2,1) both}
+  .hd .contact{animation:up .7s .15s cubic-bezier(.2,.8,.2,1) both}
+  .hd h1{animation:up .8s .25s cubic-bezier(.2,.8,.2,1) both,shimmer 5s 1.2s ease-in-out infinite alternate}
+  .hd .lead{animation:up .8s .4s cubic-bezier(.2,.8,.2,1) both}
+  .hd::before{animation:float1 14s ease-in-out infinite}
+  .hd::after{animation:float2 17s ease-in-out infinite}
+  .ship{animation:up .7s .5s cubic-bezier(.2,.8,.2,1) both}
+}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}*{animation:none!important}}
 </style>
 </head>
 <body>
@@ -672,6 +725,21 @@ aL.addEventListener('click',()=>tabsBox.scrollBy({left:-240,behavior:'smooth'}))
 aR.addEventListener('click',()=>tabsBox.scrollBy({left:240,behavior:'smooth'}));
 setTimeout(arrows,50);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(arrows);
 
+</script>
+<script>
+(function(){
+  var nav=document.querySelector('.nav');
+  function onS(){nav.classList.toggle('stuck',window.scrollY>140)}
+  window.addEventListener('scroll',onS,{passive:true});onS();
+  var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var io=('IntersectionObserver' in window&&!rm)?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -6% 0px',threshold:.05}):null;
+  function reveal(root){if(!io)return;(root||document).querySelectorAll('#main .ser:not(.rv),#main .group:not(.rv),#main .note:not(.rv),#main .tbl:not(.rv)').forEach(function(el){
+    if(el.closest('.ser')&&!el.classList.contains('ser'))return;el.classList.add('rv');io.observe(el)})}
+  var main=document.getElementById('main');
+  if(main){new MutationObserver(function(){reveal()}).observe(main,{childList:true});reveal()}
+  var f=document.getElementById('fcnt'),fab=document.getElementById('fab'),last=f&&f.textContent;
+  if(f&&fab)new MutationObserver(function(){if(f.textContent!==last){last=f.textContent;fab.classList.remove('bump');void fab.offsetWidth;fab.classList.add('bump')}}).observe(f,{childList:true,characterData:true,subtree:true});
+})();
 </script>
 </body>
 </html>
