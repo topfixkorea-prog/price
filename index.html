@@ -390,6 +390,8 @@ body:not(.home) .hero,body:not(.home) .chips,body:not(.home) .tiles-wrap{display
 .fnote{color:#a1a4b4;font-size:13px;line-height:1.55;max-width:60ch}
 @media (max-width:640px){.hero{grid-template-columns:1fr;padding:26px 22px 8px}.glass{height:190px;margin-top:6px}.fcols{grid-template-columns:1fr}}
 .rv{transition-duration:.6s}
+.drawer details.pv{display:none!important}
+.df input,.df textarea,.csel{background:#f1f2f7!important}
 </style>
 </head>
 <body class="home">
@@ -418,6 +420,7 @@ body:not(.home) .hero,body:not(.home) .chips,body:not(.home) .tiles-wrap{display
     <div class="sub"><span>Товары</span><span id="csub"></span></div><div class="sub"><span>Посылка</span><span id="cship"></span></div><p class="hint" id="cfree"></p><div class="tot"><span>Итого</span><span id="ctot"></span></div>
     <input id="cname" placeholder="Ваше имя (по желанию)" autocomplete="name">
     <textarea id="ccom" placeholder="Комментарий к заказу: сроки, цвет, вопросы"></textarea>
+    <input id="cphone" type="text" placeholder="Телефон или Telegram для связи" autocomplete="off" style="display:none;margin-bottom:10px">
     <a class="btn" id="sendTg" href="#" target="_blank" rel="noopener">Отправить заказ в Telegram</a>
     <button class="btn sec" id="copyBtn" type="button">Скопировать текст заказа</button>
     <p class="ok" id="okmsg" role="status"></p>
@@ -827,7 +830,23 @@ $('copyBtn').addEventListener('click',()=>{if(missingColor()||icLow()){gate();re
 function tgHref(){return 'https://t.me/+'+TG_PHONE+'?text='+encodeURIComponent(orderTextKo())}
 function updTg(){$('sendTg').href=tgHref();const p=$('pvt');if(p)p.value=orderTextKo();offerLinks()}
 ['cname','ccom'].forEach(id=>$(id).addEventListener('input',updTg));
+const ORDER_URL='https://topfix-orders.topfixkorea.workers.dev/';
+if(ORDER_URL){$('cphone').style.display='';$('sendTg').removeAttribute('target');$('sendTg').textContent='Отправить заказ'}
+function sendDirect(e){
+  e.preventDefault();
+  if(missingColor()||icLow()){gate();return}
+  const ct=$('cphone').value.trim();
+  if(ct.length<5){$('okmsg').textContent='Укажите телефон или Telegram, чтобы мы могли подтвердить заказ.';$('cphone').focus();return}
+  const btn=$('sendTg');if(btn.dataset.busy)return;btn.dataset.busy='1';btn.textContent='Отправляем…';
+  fetch(ORDER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:orderTextKo()+'\n연락처: '+ct})})
+   .then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{if(!j.ok)throw 0;
+     cart={};cc={};try{localStorage.removeItem('cart_v2');localStorage.removeItem('cart_cc2')}catch(_){}
+     $('okmsg').textContent='Заказ отправлен. Мы свяжемся с вами для подтверждения наличия и цены.';updateAll();render()})
+   .catch(()=>{$('okmsg').textContent='Не получилось отправить. Нажмите «Скопировать текст заказа» и отправьте его нам в Telegram или по телефону 010-2243-6843.'})
+   .finally(()=>{delete btn.dataset.busy;btn.textContent='Отправить заказ'});
+}
 $('sendTg').addEventListener('click',e=>{
+  if(ORDER_URL){sendDirect(e);return}
   if(missingColor()||icLow()){e.preventDefault();gate();return}
   updTg();copyText(orderTextKo());
   $('okmsg').textContent='Открываем Telegram. Текст заказа уже в поле сообщения, останется нажать «Отправить».';
