@@ -392,6 +392,17 @@ body:not(.home) .hero,body:not(.home) .chips,body:not(.home) .tiles-wrap{display
 .rv{transition-duration:.6s}
 .drawer details.pv{display:none!important}
 .df input,.df textarea,.csel{background:#f1f2f7!important}
+
+.addr{margin:6px 0 12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#fafbff}
+.addr .ah{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.addr .ah b{font-size:15px}
+.aacts button{font:inherit;font-size:13px;border:0;background:none;color:var(--acc);cursor:pointer;padding:2px 6px;font-weight:600}
+.aacts button:last-child{color:#c0392b}
+.addr select{width:100%;padding:10px;border:0;border-radius:12px;background:#f1f2f7;font:inherit;margin-bottom:8px}
+.aview{font-size:14px;line-height:1.5}
+.aform input{width:100%;margin-bottom:8px;box-sizing:border-box;padding:12px 14px;border:0;border-radius:12px;background:#f1f2f7;font:inherit}
+.abtns{display:flex;gap:8px}.abtns .btn{flex:1;padding:11px;text-align:center;cursor:pointer;border:0;font:inherit;font-weight:600}
+.addr .hint{margin:8px 0 0;font-size:12px}
 </style>
 </head>
 <body class="home">
@@ -418,7 +429,22 @@ body:not(.home) .hero,body:not(.home) .chips,body:not(.home) .tiles-wrap{display
   <div class="db" id="cbody"></div>
   <div class="df" id="cform">
     <div class="sub"><span>Товары</span><span id="csub"></span></div><div class="sub"><span>Посылка</span><span id="cship"></span></div><p class="hint" id="cfree"></p><div class="tot"><span>Итого</span><span id="ctot"></span></div>
-    <input id="cname" placeholder="Ваше имя (по желанию)" autocomplete="name">
+    <div class="addr" id="addr">
+      <div class="ah"><b>Адрес доставки</b><span class="aacts" id="aacts"></span></div>
+      <select id="asel" aria-label="Сохранённые адреса"></select>
+      <div class="aview" id="aview"></div>
+      <div class="aform" id="aform">
+        <input id="afn" placeholder="Получатель (имя и фамилия)" autocomplete="name">
+        <input id="aph" placeholder="Телефон получателя" autocomplete="tel" inputmode="tel">
+        <input id="acn" placeholder="Страна" autocomplete="country-name">
+        <input id="act" placeholder="Город" autocomplete="address-level2">
+        <input id="aad" placeholder="Адрес: улица, дом, квартира" autocomplete="street-address">
+        <input id="azp" placeholder="Индекс (если есть)" autocomplete="postal-code">
+        <div class="abtns"><button type="button" class="btn" id="asave">Сохранить адрес</button><button type="button" class="btn sec" id="acancel">Отмена</button></div>
+      </div>
+      <p class="hint">Адрес сохраняется на этом устройстве, в следующий раз вводить его не придётся.</p>
+    </div>
+    <input id="cname" placeholder="Ваше имя (по желанию)" autocomplete="name" style="display:none">
     <textarea id="ccom" placeholder="Комментарий к заказу: сроки, цвет, вопросы"></textarea>
     <input id="cphone" type="text" placeholder="Телефон или Telegram для связи" autocomplete="off" style="display:none;margin-bottom:10px">
     <a class="btn" id="sendTg" href="#" target="_blank" rel="noopener">Отправить заказ в Telegram</a>
@@ -740,8 +766,9 @@ function orderTextKo(){
     L.push((i+1)+'. '+x.base+(x.col?', '+x.col:'')+(d.length?' ('+d.join(', ')+')':'')+', '+x.n+'개');});
   const [sum,unk]=totals();const [sh]=shipInfo(sum);
   L.push('');L.push('합계 '+fmtKo(sum+sh)+'원 ('+(sh?'택배비 '+fmtKo(sh)+'원 포함':'택배 무료')+')'+(unk?' + 가격 문의 품목':''));
-  const nm=$('cname').value.trim(),cm=$('ccom').value.trim();
-  if(nm)L.push('이름: '+nm);if(cm)L.push('메모(러시아어): '+cm);
+  const cm=$('ccom').value.trim(),A=curAddr();
+  if(A){L.push('수령인: '+A.fn);L.push('연락처: '+A.ph);L.push('주소: '+[A.ad,A.ct,A.cn,A.zp].filter(Boolean).join(', '))}
+  if(cm)L.push('메모(러시아어): '+cm);
   return L.join('\n');
 }
 
@@ -797,9 +824,10 @@ function cntHTML(k,n){return '<button class="qb" data-m="'+k+'" aria-label="Ме
 function slotHTML(id){const n=cart[id]||0;return n?cntHTML(id,n):'<button class="add" data-a="'+id+'">В корзину</button>'}
 const MIN_IC=50000;
 function icLow(){const ids=Object.keys(cart);return ids.some(id=>DATA.D[id][0]===9)&&totals()[0]<MIN_IC}
-function gate(){const mc=missingColor(),il=icLow(),bad=mc||il;$('sendTg').classList.toggle('dis',bad);$('copyBtn').classList.toggle('dis',bad);
+function gate(){const mc=missingColor(),il=icLow(),am=addrMissing(),bad=mc||il||am;$('sendTg').classList.toggle('dis',bad);$('copyBtn').classList.toggle('dis',bad);
   if(mc)$('okmsg').textContent='Выберите цвет у позиций в корзине, затем отправляйте заказ.';
-  else if(il)$('okmsg').textContent='Микросхемы заказываются только вместе с другими товарами: минимальная сумма заказа '+fmt(MIN_IC)+' ₩. Добавьте ещё товары (сейчас '+fmt(totals()[0])+' ₩).'}
+  else if(il)$('okmsg').textContent='Микросхемы заказываются только вместе с другими товарами: минимальная сумма заказа '+fmt(MIN_IC)+' ₩. Добавьте ещё товары (сейчас '+fmt(totals()[0])+' ₩).';
+  else if(am)$('okmsg').textContent='Заполните адрес доставки и нажмите «Сохранить адрес».'}
 function openCart(o){$('drawer').classList.toggle('on',o);$('veil').classList.toggle('on',o);if(o)cartRender()}
 document.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
@@ -809,7 +837,7 @@ document.addEventListener('click',e=>{
   else if(g('data-m')!==null)setQty(g('data-m'),(cart[g('data-m')]||0)-1);
   else if(g('data-d')!==null)setQty(g('data-d'),0);
 });
-function onColor(t){const id=t.getAttribute('data-cs'),i=+t.getAttribute('data-i');if(!cc[id])cc[id]=[];cc[id][i]=t.value;saveCT();if(t.tagName==='SELECT')t.classList.toggle('need',!t.value);updTg();const bad=missingColor();$('sendTg').classList.toggle('dis',bad);$('copyBtn').classList.toggle('dis',bad);$('okmsg').textContent=bad?'Выберите цвет у позиций в корзине, затем отправляйте заказ.':''}
+function onColor(t){const id=t.getAttribute('data-cs'),i=+t.getAttribute('data-i');if(!cc[id])cc[id]=[];cc[id][i]=t.value;saveCT();if(t.tagName==='SELECT')t.classList.toggle('need',!t.value);updTg();const bad=missingColor()||addrMissing();$('sendTg').classList.toggle('dis',bad);$('copyBtn').classList.toggle('dis',bad);$('okmsg').textContent=bad?'Выберите цвет у позиций в корзине, затем отправляйте заказ.':''}
 document.addEventListener('input',e=>{const t=e.target;if(t.getAttribute&&t.getAttribute('data-cs')!==null)onColor(t)});
 document.addEventListener('change',e=>{const t=e.target;if(t.getAttribute&&t.getAttribute('data-cs')!==null)onColor(t)});
 $('ophone').addEventListener('input',offerLinks);
@@ -826,19 +854,53 @@ function copyText(t){
   try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(()=>{});return true}}catch(e){}
   try{const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch(e){return false}
 }
-$('copyBtn').addEventListener('click',()=>{if(missingColor()||icLow()){gate();return}$('okmsg').textContent=copyText(orderTextKo())?'Текст заказа скопирован. Вставьте его в Telegram.':'Не удалось скопировать автоматически.'});
+$('copyBtn').addEventListener('click',()=>{if(missingColor()||icLow()||addrMissing()){gate();return}$('okmsg').textContent=copyText(orderTextKo())?'Текст заказа скопирован. Вставьте его в Telegram.':'Не удалось скопировать автоматически.'});
 function tgHref(){return 'https://t.me/+'+TG_PHONE+'?text='+encodeURIComponent(orderTextKo())}
 function updTg(){$('sendTg').href=tgHref();const p=$('pvt');if(p)p.value=orderTextKo();offerLinks()}
 ['cname','ccom'].forEach(id=>$(id).addEventListener('input',updTg));
+
+/* ---- адреса доставки ---- */
+let ADDR={list:[],sel:null},addrEdit=null;
+try{ADDR=JSON.parse(localStorage.getItem('addr_v1')||'null')||ADDR}catch(e){}
+function saveAddr(){try{localStorage.setItem('addr_v1',JSON.stringify(ADDR))}catch(e){}}
+function curAddr(){return ADDR.list.find(a=>a.id===ADDR.sel)||null}
+function addrMissing(){return !curAddr()}
+function addrLine(a){return [a.ad,a.ct,a.cn,a.zp].filter(Boolean).join(', ')}
+function renderAddr(){
+  const A=curAddr(),editing=addrEdit!==null||!ADDR.list.length;
+  $('aform').style.display=editing?'':'none';
+  $('asel').style.display=(!editing&&ADDR.list.length>1)?'':'none';
+  $('aview').style.display=(!editing&&A)?'':'none';
+  $('acancel').style.display=ADDR.list.length?'':'none';
+  $('asel').innerHTML=ADDR.list.map(a=>'<option value="'+a.id+'"'+(a.id===ADDR.sel?' selected':'')+'>'+esc(a.fn+', '+a.ct)+'</option>').join('');
+  $('aview').innerHTML=A?'<b>'+esc(A.fn)+'</b>, '+esc(A.ph)+'<br>'+esc(addrLine(A)):'';
+  $('aacts').innerHTML=(!editing&&A)?'<button type="button" data-act="edit">Изменить</button><button type="button" data-act="new">Добавить</button><button type="button" data-act="del">Удалить</button>':'';
+  if(editing){const E=addrEdit&&addrEdit!=='new'?ADDR.list.find(a=>a.id===addrEdit):null;
+    ['fn','ph','cn','ct','ad','zp'].forEach(k=>{$('a'+k).value=E?E[k]:($('a'+k).dataset.keep||'')})}
+  gate();updTg();
+}
+$('asel').addEventListener('change',()=>{ADDR.sel=$('asel').value;saveAddr();renderAddr()});
+$('aacts').addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;const a=t.dataset.act;
+  if(a==='edit'){addrEdit=ADDR.sel}
+  else if(a==='new'){addrEdit='new';['fn','ph','cn','ct','ad','zp'].forEach(k=>$('a'+k).dataset.keep='')}
+  else if(a==='del'){if(!confirm('Удалить этот адрес?'))return;ADDR.list=ADDR.list.filter(x=>x.id!==ADDR.sel);ADDR.sel=ADDR.list.length?ADDR.list[0].id:null;saveAddr();addrEdit=null}
+  renderAddr()});
+$('acancel').addEventListener('click',()=>{addrEdit=null;renderAddr()});
+$('asave').addEventListener('click',()=>{
+  const v={};let bad=null;['fn','ph','cn','ct','ad','zp'].forEach(k=>{v[k]=$('a'+k).value.trim();if(!v[k]&&k!=='zp'&&!bad)bad=k});
+  if(bad){$('a'+bad).focus();$('okmsg').textContent='Заполните все поля адреса, кроме индекса.';return}
+  if(addrEdit&&addrEdit!=='new'){const E=ADDR.list.find(a=>a.id===addrEdit);Object.assign(E,v)}
+  else{const id='a'+Date.now();ADDR.list.push(Object.assign({id},v));ADDR.sel=id}
+  saveAddr();addrEdit=null;$('okmsg').textContent='Адрес сохранён.';renderAddr()});
+if(ADDR.list.length&&!curAddr())ADDR.sel=ADDR.list[0].id;
 const ORDER_URL='https://topfix-orders.topfixkorea.workers.dev/';
-if(ORDER_URL){$('cphone').style.display='';$('sendTg').removeAttribute('target');$('sendTg').textContent='Отправить заказ'}
+if(ORDER_URL){document.querySelectorAll('#cform>p.hint').forEach(function(h){if(h.id!=='cfree')h.style.display='none'});$('sendTg').removeAttribute('target');$('sendTg').textContent='Отправить заказ'}
 function sendDirect(e){
   e.preventDefault();
-  if(missingColor()||icLow()){gate();return}
-  const ct=$('cphone').value.trim();
-  if(ct.length<5){$('okmsg').textContent='Укажите телефон или Telegram, чтобы мы могли подтвердить заказ.';$('cphone').focus();return}
+  if(missingColor()||icLow()||addrMissing()){gate();return}
+  const ct=curAddr().ph;
   const btn=$('sendTg');if(btn.dataset.busy)return;btn.dataset.busy='1';btn.textContent='Отправляем…';
-  fetch(ORDER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:orderTextKo()+'\n연락처: '+ct})})
+  fetch(ORDER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:orderTextKo()})})
    .then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{if(!j.ok)throw 0;
      cart={};cc={};try{localStorage.removeItem('cart_v2');localStorage.removeItem('cart_cc2')}catch(_){}
      $('okmsg').textContent='Заказ отправлен. Мы свяжемся с вами для подтверждения наличия и цены.';updateAll();render()})
@@ -847,12 +909,12 @@ function sendDirect(e){
 }
 $('sendTg').addEventListener('click',e=>{
   if(ORDER_URL){sendDirect(e);return}
-  if(missingColor()||icLow()){e.preventDefault();gate();return}
+  if(missingColor()||icLow()||addrMissing()){e.preventDefault();gate();return}
   updTg();copyText(orderTextKo());
   $('okmsg').textContent='Открываем Telegram. Текст заказа уже в поле сообщения, останется нажать «Отправить».';
 });
 q.addEventListener('input',render);
-render();updateAll();
+render();updateAll();renderAddr();
 const tabsBox=$('tabs'),aL=$('arrL'),aR=$('arrR');
 function arrows(){const m=tabsBox.scrollWidth-tabsBox.clientWidth;aL.classList.toggle('on',tabsBox.scrollLeft>4);aR.classList.toggle('on',m>4&&tabsBox.scrollLeft<m-4)}
 tabsBox.addEventListener('scroll',arrows,{passive:true});window.addEventListener('resize',arrows);
